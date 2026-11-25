@@ -1,6 +1,14 @@
 export type { ValidationResult, ValidationErrorCode } from "./types";
 
-export { validateGSTIN, isValidGSTIN, computeGSTINChecksum, isIntraStateSupply, type GSTINDetails } from "./gstin";
+export {
+  validateGSTIN,
+  isValidGSTIN,
+  computeGSTINChecksum,
+  isIntraStateSupply,
+  GSTIN_TYPE_LABELS,
+  type GSTINDetails,
+  type GSTINType,
+} from "./gstin";
 export { validatePAN, isValidPAN, maskPAN, PAN_HOLDER_TYPES, type PANDetails } from "./pan";
 export {
   validateIFSC,
@@ -21,7 +29,18 @@ export {
   type UPIPaymentParams,
   type BuildUPILinkOptions,
 } from "./upi";
-export { validatePincode, isValidPincode, PINCODE_ZONES, type PincodeDetails } from "./pincode";
+export {
+  validatePincode,
+  isValidPincode,
+  lookupPincode,
+  PincodeLookupError,
+  PINCODE_ZONES,
+  DEFAULT_PINCODE_API,
+  type PincodeDetails,
+  type PincodeLocation,
+  type PostOffice,
+  type LookupPincodeOptions,
+} from "./pincode";
 export { validateIndianMobile, isValidIndianMobile, formatIndianMobile, type PhoneDetails } from "./phone";
 export {
   formatINR,

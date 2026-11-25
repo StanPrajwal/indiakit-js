@@ -1,12 +1,13 @@
 import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { GSTINInput, PhoneInput, useGSTIN, useIFSC, useINR, usePAN, useUPILink } from "../src/react";
-import { __clearIFSCCache } from "../src/react/hooks";
+import { GSTINInput, PhoneInput, useGSTIN, useIFSC, useINR, usePAN, usePincode, useUPILink } from "../src/react";
+import { __clearIFSCCache, __clearPincodeCache } from "../src/react/hooks";
 
 afterEach(() => {
   cleanup();
   __clearIFSCCache();
+  __clearPincodeCache();
 });
 
 describe("useGSTIN", () => {
@@ -152,5 +153,39 @@ describe("Input components", () => {
     fireEvent.change(input, { target: { value: "98765 43210x" } });
     expect(input.value).toBe("98765 43210");
     expect(screen.getByTestId("out").textContent).toBe("+919876543210");
+  });
+});
+
+describe("usePincode lookup", () => {
+  const body = [{ Status: "Success", PostOffice: [{ Name: "Connaught Place", District: "New Delhi", State: "Delhi", Circle: "Delhi", BranchType: "Sub Post Office", DeliveryStatus: "Non-Delivery" }] }];
+
+  it("makes no network calls by default", () => {
+    const fetch = vi.fn();
+    const { result } = renderHook(() => usePincode({ defaultValue: "110001", lookupOptions: { fetch } }));
+    expect(result.current.isValid).toBe(true);
+    expect(result.current.lookupStatus).toBe("idle");
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("looks up and caches the location when lookup is on", async () => {
+    const fetch = vi.fn(async () => new Response(JSON.stringify(body), { status: 200 }));
+    const { result } = renderHook(() => usePincode({ lookup: true, lookupOptions: { fetch } }));
+    act(() => result.current.setValue("110001"));
+    expect(result.current.lookupStatus).toBe("loading");
+    await waitFor(() => expect(result.current.lookupStatus).toBe("success"));
+    expect(result.current.location).toMatchObject({ district: "New Delhi", state: "Delhi" });
+
+    act(() => result.current.setValue("11000"));
+    expect(result.current.lookupStatus).toBe("idle");
+    act(() => result.current.setValue("110001"));
+    expect(result.current.lookupStatus).toBe("success");
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports NOT_FOUND", async () => {
+    const fetch = vi.fn(async () => new Response(JSON.stringify([{ Status: "Error", PostOffice: null }]), { status: 200 }));
+    const { result } = renderHook(() => usePincode({ lookup: true, lookupOptions: { fetch }, defaultValue: "999999" }));
+    await waitFor(() => expect(result.current.lookupStatus).toBe("error"));
+    expect(result.current.lookupErrorCode).toBe("NOT_FOUND");
   });
 });

@@ -8,14 +8,17 @@ function GSTINDemo() {
   return (
     <section>
       <h2>GSTIN</h2>
-      <label htmlFor="gstin">GSTIN (try 27AAPFU0939F1ZV)</label>
+      <label htmlFor="gstin">GSTIN (try 27AAPFU0939F1ZV, or the UN body UIN 2317UNO00001UND)</label>
       <input id="gstin" {...g.inputProps} data-valid={g.isValid || undefined} data-invalid={g.error ? "" : undefined} />
       <div className="err">{g.error}</div>
       {g.details && (
         <dl>
+          <dt>Type</dt><dd>{g.details.typeLabel}</dd>
           <dt>State</dt><dd>{g.details.stateName} ({g.details.stateCode})</dd>
-          <dt>PAN</dt><dd>{g.details.pan}</dd>
-          <dt>Holder</dt><dd>{g.details.panHolderType}</dd>
+          {g.details.pan && <><dt>PAN</dt><dd>{g.details.pan}</dd></>}
+          {g.details.panHolderType && <><dt>Holder</dt><dd>{g.details.panHolderType}</dd></>}
+          {g.details.tan && <><dt>TAN</dt><dd>{g.details.tan}</dd></>}
+          {g.details.countryCode && <><dt>Country / org</dt><dd>{g.details.countryCode} (registered 20{g.details.registrationYear})</dd></>}
         </dl>
       )}
     </section>
@@ -58,7 +61,7 @@ function IFSCDemo() {
 
 function ContactDemo() {
   const phone = usePhone();
-  const pin = usePincode();
+  const pin = usePincode({ lookup: true });
   return (
     <section>
       <h2>Mobile & PIN code</h2>
@@ -66,10 +69,18 @@ function ContactDemo() {
       <input id="phone" {...phone.inputProps} data-valid={phone.isValid || undefined} data-invalid={phone.error ? "" : undefined} />
       <div className="err">{phone.error}</div>
       {phone.details && <div className="ok">E.164: {phone.details.e164}</div>}
-      <label htmlFor="pin">PIN code</label>
+      <label htmlFor="pin">PIN code (try 560001)</label>
       <input id="pin" {...pin.inputProps} data-valid={pin.isValid || undefined} data-invalid={pin.error ? "" : undefined} />
-      <div className="err">{pin.error}</div>
-      {pin.details && <div className="ok">{pin.details.zone} zone: {pin.details.regions.join(", ")}</div>}
+      <div className="err">{pin.error || pin.lookupError}</div>
+      {pin.lookupStatus === "loading" && <div>Looking up…</div>}
+      {pin.location && (
+        <dl>
+          <dt>District</dt><dd>{pin.location.district}</dd>
+          <dt>State</dt><dd>{pin.location.state}</dd>
+          <dt>Post offices</dt><dd>{pin.location.postOffices.map((o) => o.name).join(", ")}</dd>
+        </dl>
+      )}
+      {!pin.location && pin.details && <div className="ok">{pin.details.zone} zone</div>}
     </section>
   );
 }

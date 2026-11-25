@@ -10,7 +10,14 @@ import {
 } from "../inr";
 import { validatePAN, type PANDetails } from "../pan";
 import { validateIndianMobile, type PhoneDetails } from "../phone";
-import { validatePincode, type PincodeDetails } from "../pincode";
+import {
+  lookupPincode,
+  validatePincode,
+  PincodeLookupError,
+  type LookupPincodeOptions,
+  type PincodeDetails,
+  type PincodeLocation,
+} from "../pincode";
 import { buildUPILink, validateUPIId, type BuildUPILinkOptions, type UPIIdDetails, type UPIPaymentParams } from "../upi";
 import { upperAlnum, useValidatedField, type UseValidatedFieldOptions, type ValidatedField } from "./useValidatedField";
 
@@ -35,14 +42,51 @@ export function usePAN(options?: UseValidatedFieldOptions): ValidatedField<PANDe
   });
 }
 
-/** Headless 6-digit PIN code field (numeric keyboard on mobile). */
-export function usePincode(options?: UseValidatedFieldOptions): ValidatedField<PincodeDetails> {
-  return useValidatedField(validatePincode, options, {
+export interface UsePincodeOptions extends UseValidatedFieldOptions {
+  /**
+   * Look up the district, state and post offices once the PIN code is valid.
+   * Default `false`, so the hook makes no network calls unless you ask for them.
+   */
+  lookup?: boolean;
+  /** Options passed to `lookupPincode` (custom `baseUrl` or `fetch`). */
+  lookupOptions?: Omit<LookupPincodeOptions, "signal">;
+}
+
+export interface PincodeField extends ValidatedField<PincodeDetails> {
+  /** District, state and post offices, once the lookup succeeds. */
+  location: PincodeLocation | undefined;
+  lookupStatus: LookupStatus;
+  /** Set when the lookup fails, e.g. "No post office found for 999999." */
+  lookupError: string | undefined;
+  lookupErrorCode: PincodeLookupError["code"] | undefined;
+}
+
+const pincodeCache = new Map<string, PincodeLocation>();
+
+/**
+ * Headless 6-digit PIN code field (numeric keyboard on mobile).
+ * Pass `{ lookup: true }` to also fetch the district, state and post offices
+ * from the free India Post API, e.g. to auto-fill an address form.
+ */
+export function usePincode(options: UsePincodeOptions = {}): PincodeField {
+  const { lookup = false, lookupOptions, ...fieldOptions } = options;
+  const field = useValidatedField(validatePincode, fieldOptions, {
     transform: digitsOnly,
     maxLength: 6,
     inputMode: "numeric",
     autoComplete: "postal-code",
   });
+  const code = field.result.valid ? field.result.value : "";
+  const remote = useRemoteLookup(code, lookup, lookupPincode, lookupOptions, pincodeCache, (err) =>
+    err instanceof PincodeLookupError ? err : new PincodeLookupError("PIN code lookup failed.", "NETWORK"),
+  );
+  return {
+    ...field,
+    location: remote.data,
+    lookupStatus: remote.status,
+    lookupError: remote.error,
+    lookupErrorCode: remote.errorCode,
+  };
 }
 
 /** Headless Indian mobile number field. `result.value` is E.164 (`+919876543210`). */
@@ -67,7 +111,9 @@ export function useUPIId(options?: UseValidatedFieldOptions): ValidatedField<UPI
   });
 }
 
-export type IFSCLookupStatus = "idle" | "loading" | "success" | "error";
+export type LookupStatus = "idle" | "loading" | "success" | "error";
+/** @deprecated Use `LookupStatus`. */
+export type IFSCLookupStatus = LookupStatus;
 
 export interface UseIFSCOptions extends UseValidatedFieldOptions {
   /** Look up the branch once the code is valid. Default `true`. */
@@ -78,7 +124,7 @@ export interface UseIFSCOptions extends UseValidatedFieldOptions {
 
 export interface IFSCField extends ValidatedField<IFSCDetails> {
   branch: IFSCBranch | undefined;
-  lookupStatus: IFSCLookupStatus;
+  lookupStatus: LookupStatus;
   /** Set when the lookup fails, e.g. "No bank branch found for HDFC0999999." */
   lookupError: string | undefined;
   lookupErrorCode: IFSCLookupError["code"] | undefined;
@@ -89,6 +135,75 @@ const branchCache = new Map<string, IFSCBranch>();
 /** @internal For tests. */
 export function __clearIFSCCache(): void {
   branchCache.clear();
+}
+
+/** @internal For tests. */
+export function __clearPincodeCache(): void {
+  pincodeCache.clear();
+}
+
+interface RemoteState<T, C> {
+  key: string;
+  status: LookupStatus;
+  data?: T;
+  error?: string;
+  errorCode?: C;
+}
+
+/**
+ * @internal Runs `fetcher(key)` whenever `key` is non-empty and `enabled`, caching
+ * results and aborting stale requests.
+ */
+function useRemoteLookup<T, O extends object, E extends Error & { code: string }>(
+  key: string,
+  enabled: boolean,
+  fetcher: (key: string, options: O & { signal?: AbortSignal }) => Promise<T>,
+  options: O | undefined,
+  cache: Map<string, T>,
+  toError: (err: unknown) => E,
+): { status: LookupStatus; data: T | undefined; error: string | undefined; errorCode: E["code"] | undefined } {
+  const [state, setState] = useState<RemoteState<T, E["code"]>>({ key: "", status: "idle" });
+  const optsRef = useRef(options);
+  optsRef.current = options;
+  const fetcherRef = useRef(fetcher);
+  fetcherRef.current = fetcher;
+  const toErrorRef = useRef(toError);
+  toErrorRef.current = toError;
+
+  useEffect(() => {
+    if (!enabled || !key) {
+      setState({ key: "", status: "idle" });
+      return;
+    }
+    const cached = cache.get(key);
+    if (cached) {
+      setState({ key, status: "success", data: cached });
+      return;
+    }
+    const controller = new AbortController();
+    setState({ key, status: "loading" });
+    fetcherRef
+      .current(key, { ...(optsRef.current as O), signal: controller.signal })
+      .then((data) => {
+        cache.set(key, data);
+        if (!controller.signal.aborted) setState({ key, status: "success", data });
+      })
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
+        const e = toErrorRef.current(err);
+        setState({ key, status: "error", error: e.message, errorCode: e.code });
+      });
+    return () => controller.abort();
+  }, [key, enabled, cache]);
+
+  const cachedNow = enabled && key ? cache.get(key) : undefined;
+  const current: RemoteState<T, E["code"]> =
+    state.key === key
+      ? state
+      : cachedNow
+        ? { key, status: "success", data: cachedNow }
+        : { key, status: enabled && key ? "loading" : "idle" };
+  return { status: current.status, data: current.data, error: current.error, errorCode: current.errorCode };
 }
 
 /**
@@ -104,50 +219,15 @@ export function useIFSC(options: UseIFSCOptions = {}): IFSCField {
     autoCapitalize: "characters",
   });
   const code = field.result.valid ? field.result.value : "";
-
-  const [state, setState] = useState<{
-    code: string;
-    status: IFSCLookupStatus;
-    branch?: IFSCBranch;
-    error?: string;
-    errorCode?: IFSCLookupError["code"];
-  }>({ code: "", status: "idle" });
-
-  const optsRef = useRef(lookupOptions);
-  optsRef.current = lookupOptions;
-
-  useEffect(() => {
-    if (!lookup || !code) {
-      setState({ code: "", status: "idle" });
-      return;
-    }
-    const cached = branchCache.get(code);
-    if (cached) {
-      setState({ code, status: "success", branch: cached });
-      return;
-    }
-    const controller = new AbortController();
-    setState({ code, status: "loading" });
-    lookupIFSC(code, { ...optsRef.current, signal: controller.signal })
-      .then((branch) => {
-        branchCache.set(code, branch);
-        if (!controller.signal.aborted) setState({ code, status: "success", branch });
-      })
-      .catch((err: unknown) => {
-        if (controller.signal.aborted) return;
-        const e = err instanceof IFSCLookupError ? err : new IFSCLookupError("IFSC lookup failed.", "NETWORK");
-        setState({ code, status: "error", error: e.message, errorCode: e.code });
-      });
-    return () => controller.abort();
-  }, [code, lookup]);
-
-  const current = state.code === code ? state : { status: (lookup && code ? "loading" : "idle") as IFSCLookupStatus };
+  const remote = useRemoteLookup(code, lookup, lookupIFSC, lookupOptions, branchCache, (err) =>
+    err instanceof IFSCLookupError ? err : new IFSCLookupError("IFSC lookup failed.", "NETWORK"),
+  );
   return {
     ...field,
-    branch: "branch" in current ? current.branch : undefined,
-    lookupStatus: current.status,
-    lookupError: "error" in current ? current.error : undefined,
-    lookupErrorCode: "errorCode" in current ? current.errorCode : undefined,
+    branch: remote.data,
+    lookupStatus: remote.status,
+    lookupError: remote.error,
+    lookupErrorCode: remote.errorCode,
   };
 }
 

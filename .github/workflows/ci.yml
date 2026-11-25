@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Check the packed package loads (ESM and CJS)
+        run: |
+          npm pack
+          mkdir /tmp/smoke && cd /tmp/smoke && npm init -y >/dev/null
+          npm i "$GITHUB_WORKSPACE"/indiakit-js-*.tgz react@18
+          node --input-type=module -e "import { validateGSTIN } from 'indiakit-js'; import 'indiakit-js/react'; if (!validateGSTIN('27AAPFU0939F1ZV').valid) process.exit(1)"
+          node -e "const k = require('indiakit-js'); require('indiakit-js/react'); if (!k.isValidGSTIN('27AAPFU0939F1ZV')) process.exit(1)"

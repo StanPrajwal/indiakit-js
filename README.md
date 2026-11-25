@@ -6,7 +6,7 @@
 [![types](https://img.shields.io/npm/types/indiakit-js.svg)](https://www.npmjs.com/package/indiakit-js)
 [![license](https://img.shields.io/npm/l/indiakit-js.svg)](./LICENSE)
 
-Validators, formatters and **headless React hooks** for Indian apps: GSTIN, PAN, IFSC (with live branch lookup), UPI links, PIN codes, mobile numbers and ₹ lakh/crore formatting.
+Validators, formatters and **headless React hooks** for Indian apps: GSTIN (including UIN, OIDAR, TDS and TCS registrations), PAN, IFSC (with live branch lookup), UPI links, PIN codes (with live district and post office lookup), mobile numbers and ₹ lakh/crore formatting.
 
 - **Zero runtime dependencies.** The core works anywhere: browser, Node, edge, React Native.
 - **Headless.** The React hooks return state and `inputProps`, and the inputs come unstyled. Style them with your own CSS, Tailwind or shadcn.
@@ -20,12 +20,19 @@ npm install indiakit-js
 ## Core (no React)
 
 ```ts
-import { validateGSTIN, buildUPILink, formatINR, formatINRCompact, amountInWords } from "indiakit-js";
+import { validateGSTIN, lookupPincode, buildUPILink, formatINR, formatINRCompact, amountInWords } from "indiakit-js";
 
 validateGSTIN("27AAPFU0939F1ZV");
 // { valid: true, value: "27AAPFU0939F1ZV",
-//   details: { stateCode: "27", stateName: "Maharashtra", pan: "AAPFU0939F",
-//              panHolderType: "Firm / Partnership", entityNumber: "1", checksum: "V" } }
+//   details: { type: "regular", typeLabel: "Regular taxpayer", stateCode: "27", stateName: "Maharashtra",
+//              pan: "AAPFU0939F", panHolderType: "Firm / Partnership", entityNumber: "1", checksum: "V", … } }
+
+validateGSTIN("2317UNO00001UND");                 // valid, details.type === "uin" (a UN body)
+validateGSTIN(gstin, { types: ["regular"] });     // accept regular taxpayers only
+
+await lookupPincode("560001");
+// { pincode: "560001", district: "Bangalore", state: "Karnataka", circle: "Karnataka",
+//   districts: ["Bangalore"], postOffices: [{ name: "Bangalore", branchType: "Head Post Office", … }, …] }
 
 validateGSTIN("27AAPFU0939F1ZA");
 // { valid: false, value: "...", error: "INVALID_CHECKSUM",
@@ -58,16 +65,18 @@ type ValidationErrorCode =
 
 | Area | Functions |
 |---|---|
-| **GSTIN** | `validateGSTIN`, `isValidGSTIN`, `computeGSTINChecksum(first14)`, `isIntraStateSupply(a, b)` (decides CGST+SGST vs IGST) |
+| **GSTIN** | `validateGSTIN(value, { types? })` (returns `details.type`: `regular`, `tcs`, `tds`, `uin` or `oidar`), `isValidGSTIN`, `computeGSTINChecksum(first14)`, `isIntraStateSupply(a, b)` (decides CGST+SGST vs IGST), `GSTIN_TYPE_LABELS` |
 | **PAN** | `validatePAN` (checks the holder-type character), `isValidPAN`, `maskPAN` → `XXXXXX234F`, `PAN_HOLDER_TYPES` |
 | **IFSC** | `validateIFSC`, `isValidIFSC`, `lookupIFSC(code, { signal?, baseUrl?, fetch? })` → bank, branch, address, city, state, MICR, UPI/NEFT/RTGS/IMPS flags |
 | **UPI** | `validateUPIId`, `isValidUPIId`, `buildUPILink(params, { scheme? })`, `parseUPILink(link)` |
-| **PIN code** | `validatePincode` (returns postal zone and regions), `isValidPincode`, `PINCODE_ZONES` |
+| **PIN code** | `validatePincode` (returns postal zone and regions), `isValidPincode`, `lookupPincode(pin, { signal?, baseUrl?, fetch? })` → district, state, circle and post offices, `PINCODE_ZONES` |
 | **Mobile** | `validateIndianMobile` (accepts `+91`, `91`, `0` prefixes and spaces, hyphens, brackets), `isValidIndianMobile`, `formatIndianMobile` → `+91 98765 43210` |
 | **₹** | `formatINR`, `formatINRCompact` (`K` / `L` / `Cr`, or `style: "long"`), `parseINR("Rs. 1,500/-")`, `amountInWords`, `numberToIndianWords`, `groupIndian` |
 | **States** | `GST_STATE_CODES`, `getStateByGSTCode` |
 
 `lookupIFSC` calls Razorpay's free, open-source [IFSC API](https://github.com/razorpay/ifsc) by default. If you self-host it, pass `baseUrl`. It throws `IFSCLookupError` with `code` set to `"INVALID_IFSC"`, `"NOT_FOUND"` or `"NETWORK"`.
+
+`lookupPincode` calls the free India Post API at [api.postalpincode.in](https://api.postalpincode.in), which allows browser requests. It throws `PincodeLookupError` with `code` set to `"INVALID_PINCODE"`, `"NOT_FOUND"` or `"NETWORK"`.
 
 ## React
 
@@ -97,8 +106,9 @@ function BillingForm() {
 
 | Hook | Returns |
 |---|---|
-| `useGSTIN`, `usePAN`, `usePincode`, `usePhone`, `useUPIId` | `{ value, setValue, result, isValid, details, error, touched, showErrors, reset, inputProps }` |
+| `useGSTIN`, `usePAN`, `usePhone`, `useUPIId` | `{ value, setValue, result, isValid, details, error, touched, showErrors, reset, inputProps }` |
 | `useIFSC({ lookup?, lookupOptions? })` | all of the above, plus `{ branch, lookupStatus, lookupError, lookupErrorCode }`. Requests are cached and aborted when the value changes. |
+| `usePincode({ lookup?, lookupOptions? })` | the field state, plus `{ location, lookupStatus, lookupError, lookupErrorCode }`. Lookup is off by default, so the hook makes no network calls unless you pass `lookup: true`. Use `location.district` and `location.state` to auto-fill an address form. |
 | `useUPILink(params, { scheme? })` | `{ link, error }`. Pass `link` to any QR component, e.g. [`qrcode.react`](https://www.npmjs.com/package/qrcode.react). |
 | `useINR(amount)` | `{ formatted, compact, words }` |
 | `useValidatedField(validator, options, config)` | the generic hook behind all of the above. Use it with your own validators. |
@@ -124,9 +134,9 @@ Available: `GSTINInput`, `PANInput`, `IFSCInput`, `PincodeInput`, `PhoneInput`, 
 
 ## Scope and limits
 
-- **GSTIN:** covers regular taxpayer GSTINs (state code + PAN + entity + `Z` + checksum). Special formats such as UIN (embassies), OIDAR and TDS/TCS registrations are reported as `INVALID_FORMAT`.
+- **GSTIN:** covers regular taxpayers, TCS (e-commerce operators), TDS deductors (TAN-based), UINs (UN bodies, embassies) and OIDAR / non-resident online service providers (state code 99 or 97), all with the check digit verified. Non-resident taxable person (NRTP) and other rare formats are reported as `INVALID_FORMAT`. Use `{ types }` to restrict which kinds you accept.
 - **Format checks only:** a valid PAN, GSTIN or UPI ID is well-formed, but that doesn't prove it's registered. To confirm a GSTIN is active, call the GST portal or a GSP API. IFSC branches can be confirmed with `lookupIFSC`.
-- **PIN code zones** come from the first digit and are approximate. A future release will add district lookup.
+- **PIN code zones** from `validatePincode` come from the first digit and are approximate. Use `lookupPincode` (or `usePincode({ lookup: true })`) for the exact district and state.
 
 ## Development
 
