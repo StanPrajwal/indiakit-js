@@ -72,6 +72,7 @@ type ValidationErrorCode =
 | **IFSC** | `validateIFSC`, `isValidIFSC`, `lookupIFSC(code, { signal?, baseUrl?, fetch? })` → bank, branch, address, city, state, MICR, UPI/NEFT/RTGS/IMPS flags |
 | **UPI** | `validateUPIId`, `isValidUPIId`, `buildUPILink(params, { scheme? })`, `parseUPILink(link)` |
 | **PIN code** | `validatePincode` (returns postal zone and regions), `isValidPincode`, `lookupPincode(pin, { signal?, baseUrl?, fetch? })` → district, state, circle and post offices, `PINCODE_ZONES` |
+| **Other IDs** | `validateTAN`, `validateCIN` (listed flag, industry code, state, year, company type), `validateLLPIN`, `validateUdyam` (MSME), `validateVoterId` (EPIC), `validatePassport`, `validateDrivingLicence`, `validateVehicleRegistration` (including BH series), `validateBankAccount`, each with an `isValid…` form; `CIN_COMPANY_TYPES`, `RTO_STATE_CODES` |
 | **Mobile** | `validateIndianMobile` (accepts `+91`, `91`, `0` prefixes and spaces, hyphens, brackets), `isValidIndianMobile`, `formatIndianMobile` → `+91 98765 43210` |
 | **₹** | `formatINR`, `formatINRCompact` (`K` / `L` / `Cr`, or `style: "long"`), `parseINR("Rs. 1,500/-")`, `amountInWords`, `numberToIndianWords`, `groupIndian` |
 | **States** | `GST_STATE_CODES`, `getStateByGSTCode` |
@@ -138,6 +139,7 @@ Available: `GSTINInput`, `PANInput`, `IFSCInput`, `PincodeInput`, `PhoneInput`, 
 
 - **GSTIN:** covers regular taxpayers, TCS (e-commerce operators), TDS deductors (TAN-based), UINs (UN bodies, embassies) and OIDAR / non-resident online service providers (state code 99 or 97), all with the check digit verified. Non-resident taxable person (NRTP) and other rare formats are reported as `INVALID_FORMAT`. Use `{ types }` to restrict which kinds you accept.
 - **Format checks only:** a valid PAN, GSTIN or UPI ID is well-formed, but that doesn't prove it's registered. To confirm a GSTIN is active, call the GST portal or a GSP API. IFSC branches can be confirmed with `lookupIFSC`.
+- **Other IDs** are checked for shape only, because none of them has a public checksum. Voter IDs and driving licences are checked against the current national formats (`ABC1234567`, `MH14 20110062821`), and older state-specific formats are rejected. A bank account number can only be confirmed with a penny-drop check through your payment provider.
 - **PIN code zones** from `validatePincode` come from the first digit and are approximate. Use `lookupPincode` (or `usePincode({ lookup: true })`) for the exact district and state.
 
 ## Development
