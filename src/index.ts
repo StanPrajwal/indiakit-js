@@ -54,3 +54,23 @@ export {
   type AmountInWordsOptions,
 } from "./inr";
 export { GST_STATE_CODES, getStateByGSTCode } from "./states";
+export {
+  validateAadhaar,
+  isValidAadhaar,
+  maskAadhaar,
+  computeAadhaarChecksum,
+  type AadhaarDetails,
+} from "./aadhaar";
+export {
+  findPII,
+  containsPII,
+  redactPII,
+  redactObject,
+  maskPII,
+  PII_TYPES,
+  type PIIType,
+  type PIIMatch,
+  type PIIMaskStyle,
+  type FindPIIOptions,
+  type RedactPIIOptions,
+} from "./pii";
