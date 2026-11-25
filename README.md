@@ -63,11 +63,44 @@ type ValidationErrorCode =
 
 `value` is always the normalized input: trimmed and upper-cased, with spaces and hyphens removed. Mobile numbers normalize to E.164 (`+919876543210`).
 
+### GST calculation
+
+`computeGST` works out the tax on an invoice. It takes the supplier's state and the place of supply, each as a GSTIN, a state code or a state name.
+
+```ts
+import { computeGST } from "indiakit-js";
+
+const bill = computeGST({
+  supplierState: "27AAPFU0939F1ZV",  // Maharashtra
+  placeOfSupply: "29",               // Karnataka → inter-state → IGST
+  items: [
+    { description: "Laptop stand", hsn: "8473", quantity: 2, unitPrice: 1499, rate: 18 },
+    { description: "Installation", hsn: "998719", unitPrice: 500, rate: 18, discount: 50 },
+  ],
+  roundOff: true,
+});
+
+bill.taxHeads;     // ["IGST"]
+bill.lines[0];     // { taxableValue: 2998, igst: 539.64, total: 3537.64, … }
+bill.rateSummary;  // [{ rate: 18, taxableValue: 3448, igst: 620.64, … }]
+bill.totals;       // { taxableValue: 3448, igst: 620.64, totalTax: 620.64, invoiceValue: 4068.64, roundOff: 0.36, grandTotal: 4069, … }
+```
+
+- **Same state:** CGST + SGST, split equally. In union territories without a legislature (Chandigarh, Ladakh, Lakshadweep, Andaman and Nicobar, Dadra and Nagar Haveli and Daman and Diu) it's CGST + UTGST. **Different states:** IGST.
+- **`priceIncludesTax: true`** backs the tax out of MRP-style prices, so that taxable value + tax equals the price to the paisa.
+- **`zeroRated: "lut"`** (exports or SEZ supplies under a Letter of Undertaking, no tax charged) or **`zeroRated: "igst"`** (IGST paid and claimed back). Zero-rated supplies are always inter-state, and `placeOfSupply` is optional for them.
+- **`reverseCharge: true`** still calculates the tax, but leaves it out of `invoiceValue` because the recipient pays it to the government.
+- **`cessRate`** on a line adds compensation cess as a percentage of the taxable value.
+- **Arithmetic** is done in integer paise and tax is rounded half-up per line, so there's no float drift and CGST always equals SGST. `roundOff: true` rounds the grand total to the rupee and reports the difference.
+
+It doesn't look up rates for you. Pass the rate for each line, because GST rates change and depend on the HSN code. It also doesn't handle per-unit (specific) cess, TCS/TDS deductions or e-invoice JSON.
+
 ### API
 
 | Area | Functions |
 |---|---|
 | **GSTIN** | `validateGSTIN(value, { types? })` (returns `details.type`: `regular`, `tcs`, `tds`, `uin` or `oidar`), `isValidGSTIN`, `computeGSTINChecksum(first14)`, `isIntraStateSupply(a, b)` (decides CGST+SGST vs IGST), `GSTIN_TYPE_LABELS` |
+| **GST tax** | `computeGST(input)` (CGST + SGST/UTGST or IGST, line totals, rate-wise summary, invoice totals), `validateHSN` / `isValidHSN` (HSN and SAC codes), `UTGST_STATE_CODES`. See [GST calculation](#gst-calculation). |
 | **PAN** | `validatePAN` (checks the holder-type character), `isValidPAN`, `maskPAN` → `XXXXXX234F`, `PAN_HOLDER_TYPES` |
 | **IFSC** | `validateIFSC`, `isValidIFSC`, `lookupIFSC(code, { signal?, baseUrl?, fetch? })` → bank, branch, address, city, state, MICR, UPI/NEFT/RTGS/IMPS flags |
 | **UPI** | `validateUPIId`, `isValidUPIId`, `buildUPILink(params, { scheme? })`, `parseUPILink(link)` |

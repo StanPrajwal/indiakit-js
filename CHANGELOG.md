@@ -8,6 +8,8 @@ All notable changes to this project are documented here. This project follows [S
 - `redactPII(text, { types?, mask? })` masks Aadhaar, PAN, GSTIN, mobile numbers, UPI IDs, emails, card numbers and bank account numbers in free text. It confirms each candidate with checksums (Verhoeff, the GSTIN check digit, Luhn) and the PAN holder type to keep false positives low. `mask` can be `"partial"` (default), `"label"` or a function.
 - `findPII`, `containsPII`, `redactObject` (deep copy of objects and arrays, handles circular references), `maskPII` and `PII_TYPES`.
 - `validateAadhaar`, `isValidAadhaar`, `maskAadhaar` and `computeAadhaarChecksum`.
+- `computeGST(input)` calculates GST for an invoice: CGST + SGST (or UTGST) within a state, IGST across states, per-line amounts, a rate-wise summary and invoice totals. It supports tax-inclusive prices, discounts, cess, zero-rated exports and SEZ supplies (under LUT or with IGST), reverse charge and rounding off to the rupee. All arithmetic is in integer paise.
+- `validateHSN` and `isValidHSN` for HSN (goods) and SAC (services) codes, and `UTGST_STATE_CODES`.
 
 ## 0.2.1 — 2026-11-25
 

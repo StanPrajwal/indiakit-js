@@ -74,3 +74,16 @@ export {
   type FindPIIOptions,
   type RedactPIIOptions,
 } from "./pii";
+export {
+  computeGST,
+  validateHSN,
+  isValidHSN,
+  UTGST_STATE_CODES,
+  type ComputeGSTInput,
+  type GSTLineItem,
+  type GSTLineResult,
+  type GSTRateSummary,
+  type GSTTaxAmounts,
+  type GSTComputation,
+  type HSNDetails,
+} from "./gst";
