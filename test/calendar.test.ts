@@ -172,7 +172,7 @@ describe("getUpcomingGSTDeadlines", () => {
 
   it("looks far enough ahead for long windows", () => {
     const up = getUpcomingGSTDeadlines({ from: "2026-11-25", withinDays: 120 });
-    expect(up.at(-1)).toMatchObject({ form: "GSTR-3B", dueDate: "2027-03-20", periodLabel: "Feb 2027" });
+    expect(up[up.length - 1]).toMatchObject({ form: "GSTR-3B", dueDate: "2027-03-20", periodLabel: "Feb 2027" });
   });
 
   it("validates withinDays", () => {
