@@ -55,6 +55,39 @@ export {
 } from "./inr";
 export { GST_STATE_CODES, getStateByGSTCode } from "./states";
 export {
+  validateAadhaar,
+  isValidAadhaar,
+  maskAadhaar,
+  computeAadhaarChecksum,
+  type AadhaarDetails,
+} from "./aadhaar";
+export {
+  findPII,
+  containsPII,
+  redactPII,
+  redactObject,
+  maskPII,
+  PII_TYPES,
+  type PIIType,
+  type PIIMatch,
+  type PIIMaskStyle,
+  type FindPIIOptions,
+  type RedactPIIOptions,
+} from "./pii";
+export {
+  computeGST,
+  validateHSN,
+  isValidHSN,
+  UTGST_STATE_CODES,
+  type ComputeGSTInput,
+  type GSTLineItem,
+  type GSTLineResult,
+  type GSTRateSummary,
+  type GSTTaxAmounts,
+  type GSTComputation,
+  type HSNDetails,
+} from "./gst";
+export {
   toISTDateString,
   getFinancialYear,
   getFinancialQuarter,
