@@ -127,6 +127,12 @@ function App() {
     <main>
       <h1>indiakit-js</h1>
       <p className="sub">Validators, formatters and headless React hooks for Indian apps. Unstyled — this page's CSS is the demo's, not the library's.</p>
+      <p className="links">
+        <code>npm i indiakit-js</code>
+        <a href="https://www.npmjs.com/package/indiakit-js">npm</a>
+        <a href="https://github.com/StanPrajwal/indiakit-js">GitHub</a>
+        <a href="https://github.com/StanPrajwal/indiakit-js#readme">Docs</a>
+      </p>
       <div className="grid">
         <GSTINDemo />
         <IFSCDemo />

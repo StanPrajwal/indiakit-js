@@ -6,6 +6,8 @@
 [![types](https://img.shields.io/npm/types/indiakit-js.svg)](https://www.npmjs.com/package/indiakit-js)
 [![license](https://img.shields.io/npm/l/indiakit-js.svg)](./LICENSE)
 
+**[Try the live demo →](https://stanprajwal.github.io/indiakit-js/)**
+
 Validators, formatters and **headless React hooks** for Indian apps: GSTIN (including UIN, OIDAR, TDS and TCS registrations), PAN, IFSC (with live branch lookup), UPI links, PIN codes (with live district and post office lookup), mobile numbers and ₹ lakh/crore formatting.
 
 - **Zero runtime dependencies.** The core works anywhere: browser, Node, edge, React Native.
@@ -146,6 +148,7 @@ npm test          # vitest
 npm run typecheck
 npm run build     # tsup → dist/ (ESM + CJS + .d.ts)
 npm run demo      # live demo at http://localhost:5173
+npm run demo:build  # static build in demo-dist/ (deployed to GitHub Pages on every push to main)
 ```
 
 ## License

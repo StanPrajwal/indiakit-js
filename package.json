@@ -20,7 +20,7 @@
   ],
   "license": "MIT",
   "author": "Prajwal A",
-  "homepage": "https://github.com/StanPrajwal/indiakit-js#readme",
+  "homepage": "https://stanprajwal.github.io/indiakit-js/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/StanPrajwal/indiakit-js.git"
@@ -69,7 +69,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "demo": "vite demo --config demo/vite.config.ts",
-    "prepublishOnly": "npm run typecheck && npm test && npm run build"
+    "prepublishOnly": "npm run typecheck && npm test && npm run build",
+    "demo:build": "vite build demo --config demo/vite.config.ts --outDir ../demo-dist --emptyOutDir"
   },
   "peerDependencies": {
     "react": ">=17"
