@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. This project follows [Semantic Versioning](https://semver.org/). While it is below 1.0, minor versions may contain breaking changes; those are called out below.
 
+## Unreleased
+
+### Added
+- `computeGST(input)` calculates GST for an invoice: CGST + SGST (or UTGST) within a state, IGST across states, per-line amounts, a rate-wise summary and invoice totals. It supports tax-inclusive prices, discounts, cess, zero-rated exports and SEZ supplies (under LUT or with IGST), reverse charge and rounding off to the rupee. All arithmetic is in integer paise.
+- `validateHSN` and `isValidHSN` for HSN (goods) and SAC (services) codes, and `UTGST_STATE_CODES`.
+
 ## 0.2.1 — 2026-11-25
 
 - Live demo at https://stanprajwal.github.io/indiakit-js/, linked from the README and set as the package homepage. No code changes.
