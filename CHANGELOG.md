@@ -13,6 +13,7 @@ All notable changes to this project are documented here. This project follows [S
 - Financial year helpers: `getFinancialYear` and `getFinancialQuarter` (April to March, read in IST), and `toISTDateString`.
 - Bank working-day helpers that know the RBI weekend rule (Sundays, 2nd and 4th Saturdays) and the national holidays, and accept your own holiday list: `getBankHoliday`, `isBankWorkingDay`, `addBankWorkingDays`, `nextBankWorkingDay`, `countBankWorkingDays`.
 - GST due dates for monthly, QRMP and composition filers: `getGSTDueDates`, `getGSTAnnualDueDates`, `getUpcomingGSTDeadlines` and `GSTR3B_QRMP_22ND_STATE_CODES`.
+- Validators for more Indian IDs, each with an `isValid…` form: `validateTAN`, `validateCIN` (with `CIN_COMPANY_TYPES`), `validateLLPIN`, `validateUdyam`, `validateVoterId`, `validatePassport`, `validateDrivingLicence`, `validateVehicleRegistration` (standard and BH-series plates, with `RTO_STATE_CODES`) and `validateBankAccount`.
 
 ## 0.2.1 — 2026-11-25
 
