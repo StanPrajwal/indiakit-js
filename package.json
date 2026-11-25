@@ -1,6 +1,6 @@
 {
   "name": "indiakit-js",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Validators, formatters and headless React hooks for Indian apps: GSTIN, PAN, IFSC, UPI, pincode, phone and ₹ lakh/crore formatting.",
   "keywords": [
     "india",

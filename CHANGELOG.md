@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented here. This project follows [Semantic Versioning](https://semver.org/). While it is below 1.0, minor versions may contain breaking changes; those are called out below.
 
+## 0.2.1 — 2026-11-25
+
+- Live demo at https://stanprajwal.github.io/indiakit-js/, linked from the README and set as the package homepage. No code changes.
+
 ## 0.2.0 — 2026-11-25
 
 ### Added
