@@ -1,5 +1,11 @@
 # indiakit-js
 
+[![npm version](https://img.shields.io/npm/v/indiakit-js.svg)](https://www.npmjs.com/package/indiakit-js)
+[![npm downloads](https://img.shields.io/npm/dm/indiakit-js.svg)](https://www.npmjs.com/package/indiakit-js)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/indiakit-js)](https://bundlephobia.com/package/indiakit-js)
+[![types](https://img.shields.io/npm/types/indiakit-js.svg)](https://www.npmjs.com/package/indiakit-js)
+[![license](https://img.shields.io/npm/l/indiakit-js.svg)](./LICENSE)
+
 Validators, formatters and **headless React hooks** for Indian apps: GSTIN, PAN, IFSC (with live branch lookup), UPI links, PIN codes, mobile numbers and ₹ lakh/crore formatting.
 
 - **Zero runtime dependencies.** The core works anywhere: browser, Node, edge, React Native.
