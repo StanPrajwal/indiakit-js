@@ -10,6 +10,9 @@ All notable changes to this project are documented here. This project follows [S
 - `validateAadhaar`, `isValidAadhaar`, `maskAadhaar` and `computeAadhaarChecksum`.
 - `computeGST(input)` calculates GST for an invoice: CGST + SGST (or UTGST) within a state, IGST across states, per-line amounts, a rate-wise summary and invoice totals. It supports tax-inclusive prices, discounts, cess, zero-rated exports and SEZ supplies (under LUT or with IGST), reverse charge and rounding off to the rupee. All arithmetic is in integer paise.
 - `validateHSN` and `isValidHSN` for HSN (goods) and SAC (services) codes, and `UTGST_STATE_CODES`.
+- Financial year helpers: `getFinancialYear` and `getFinancialQuarter` (April to March, read in IST), and `toISTDateString`.
+- Bank working-day helpers that know the RBI weekend rule (Sundays, 2nd and 4th Saturdays) and the national holidays, and accept your own holiday list: `getBankHoliday`, `isBankWorkingDay`, `addBankWorkingDays`, `nextBankWorkingDay`, `countBankWorkingDays`.
+- GST due dates for monthly, QRMP and composition filers: `getGSTDueDates`, `getGSTAnnualDueDates`, `getUpcomingGSTDeadlines` and `GSTR3B_QRMP_22ND_STATE_CODES`.
 
 ## 0.2.1 — 2026-11-25
 
