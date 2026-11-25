@@ -8,7 +8,7 @@
 
 **[Try the live demo →](https://stanprajwal.github.io/indiakit-js/)**
 
-Validators, formatters and **headless React hooks** for Indian apps: GSTIN (including UIN, OIDAR, TDS and TCS registrations), PAN, IFSC (with live branch lookup), UPI links, PIN codes (with live district and post office lookup), mobile numbers and ₹ lakh/crore formatting.
+Validators, formatters and **headless React hooks** for Indian apps: GSTIN (including UIN, OIDAR, TDS and TCS registrations), PAN, IFSC (with live branch lookup), UPI links, PIN codes (with live district and post office lookup), mobile numbers, ₹ lakh/crore formatting, Aadhaar, and **PII redaction for logs**.
 
 - **Zero runtime dependencies.** The core works anywhere: browser, Node, edge, React Native.
 - **Headless.** The React hooks return state and `inputProps`, and the inputs come unstyled. Style them with your own CSS, Tailwind or shadcn.
@@ -75,10 +75,67 @@ type ValidationErrorCode =
 | **Mobile** | `validateIndianMobile` (accepts `+91`, `91`, `0` prefixes and spaces, hyphens, brackets), `isValidIndianMobile`, `formatIndianMobile` → `+91 98765 43210` |
 | **₹** | `formatINR`, `formatINRCompact` (`K` / `L` / `Cr`, or `style: "long"`), `parseINR("Rs. 1,500/-")`, `amountInWords`, `numberToIndianWords`, `groupIndian` |
 | **States** | `GST_STATE_CODES`, `getStateByGSTCode` |
+| **Aadhaar** | `validateAadhaar` (Verhoeff check digit), `isValidAadhaar`, `maskAadhaar` → `XXXX XXXX 0124`, `computeAadhaarChecksum(first11)` |
+| **PII redaction** | `redactPII(text, { types?, mask? })`, `findPII`, `containsPII`, `redactObject(value)`, `maskPII`, `PII_TYPES`. See [below](#pii-redaction-for-logs-dpdp). |
 
 `lookupIFSC` calls Razorpay's free, open-source [IFSC API](https://github.com/razorpay/ifsc) by default. If you self-host it, pass `baseUrl`. It throws `IFSCLookupError` with `code` set to `"INVALID_IFSC"`, `"NOT_FOUND"` or `"NETWORK"`.
 
 `lookupPincode` calls the free India Post API at [api.postalpincode.in](https://api.postalpincode.in), which allows browser requests. It throws `PincodeLookupError` with `code` set to `"INVALID_PINCODE"`, `"NOT_FOUND"` or `"NETWORK"`.
+
+## PII redaction for logs (DPDP)
+
+Keep Aadhaar, PAN, GSTIN, mobile numbers, UPI IDs, emails, card numbers and bank account numbers out of your logs, error trackers, analytics and LLM prompts.
+
+```ts
+import { redactPII, findPII, redactObject } from "indiakit-js";
+
+redactPII("KYC ok for 2345 6789 0124, PAN ABCPE1234F, call +91 98765 43210");
+// "KYC ok for XXXX XXXX 0124, PAN XXXXXX234F, call XXXXXX3210"
+
+redactPII(text, { mask: "label" });            // "... [AADHAAR], PAN [PAN], call [MOBILE]"
+redactPII(text, { mask: (m) => `<${m.type}>` });
+redactPII(text, { types: ["aadhaar", "pan"] }); // only these
+
+findPII(text);
+// [{ type: "aadhaar", match: "2345 6789 0124", value: "234567890124", start: 11, end: 25 }, …]
+
+redactObject({ user: { pan: "ABCPE1234F", phones: ["9876543210"] } }); // deep copy, strings redacted
+```
+
+**Fewer false positives than plain regex.** Each candidate is checked the same way the validators check it before it's redacted: the Verhoeff check digit for Aadhaar, the GSTIN check digit, the PAN holder type and Luhn for cards. Numbers are never cut out of longer digit runs, and bank account numbers only match after a keyword such as `A/c`, `Acct` or `Account No`. So order IDs, timestamps and trace IDs stay readable.
+
+| Type | Default mask |
+|---|---|
+| `aadhaar` | `XXXX XXXX 0124` (UIDAI style) |
+| `pan` | `XXXXXX234F` |
+| `gstin` | `27XXXXXXXXXX1ZV` (state code and last 3 kept, PAN hidden) |
+| `mobile`, `card`, `bankAccount` | last 4 digits kept, e.g. `XXXXXX3210` |
+| `email`, `upi` | `p***@example.com`, `s***@okhdfcbank` |
+
+**With pino:**
+
+```ts
+import pino from "pino";
+import { redactObject } from "indiakit-js";
+
+const logger = pino({ formatters: { log: (obj) => redactObject(obj) } });
+```
+
+**With winston:**
+
+```ts
+import winston from "winston";
+import { redactPII, redactObject } from "indiakit-js";
+
+const redact = winston.format((info) => {
+  const out = redactObject(info);
+  out.message = redactPII(String(info.message));
+  return out;
+});
+const logger = winston.createLogger({ format: winston.format.combine(redact(), winston.format.json()) });
+```
+
+Redaction is a safety net and doesn't replace keeping PII out of logs in the first place. It doesn't detect names, addresses, dates of birth, passport numbers or 16-digit Aadhaar Virtual IDs.
 
 ## React
 
