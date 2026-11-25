@@ -1,4 +1,4 @@
-/** Result returned by every validator in indiakit. */
+/** Result returned by every validator in bharatkit. */
 export type ValidationResult<TDetails = undefined> =
   | {
       valid: true;

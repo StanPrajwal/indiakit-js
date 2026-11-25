@@ -49,7 +49,7 @@ export interface ValidatedField<TDetails> {
 }
 
 /**
- * Generic headless hook that wires any indiakit validator to an input.
+ * Generic headless hook that wires any bharatkit validator to an input.
  * The specific hooks (`useGSTIN`, `usePAN`, …) are thin wrappers around this.
  */
 export function useValidatedField<TDetails>(
