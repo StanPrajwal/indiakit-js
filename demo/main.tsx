@@ -114,7 +114,7 @@ function INRDemo() {
 function App() {
   return (
     <main>
-      <h1>bharatkit</h1>
+      <h1>indiakit-js</h1>
       <p className="sub">Validators, formatters and headless React hooks for Indian apps. Unstyled — this page's CSS is the demo's, not the library's.</p>
       <div className="grid">
         <GSTINDemo />

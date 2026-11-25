@@ -1,20 +1,20 @@
-# bharatkit
+# indiakit-js
 
 Validators, formatters and **headless React hooks** for Indian apps: GSTIN, PAN, IFSC (with live branch lookup), UPI links, PIN codes, mobile numbers and ₹ lakh/crore formatting.
 
 - **Zero runtime dependencies.** The core works anywhere: browser, Node, edge, React Native.
 - **Headless.** The React hooks return state and `inputProps`, and the inputs come unstyled. Style them with your own CSS, Tailwind or shadcn.
 - **Typed.** Every validator returns the same `ValidationResult` with parsed `details`.
-- **Tree-shakeable.** ESM + CJS, `sideEffects: false`. The React layer is a separate entry point (`bharatkit/react`).
+- **Tree-shakeable.** ESM + CJS, `sideEffects: false`. The React layer is a separate entry point (`indiakit-js/react`).
 
 ```bash
-npm install bharatkit
+npm install indiakit-js
 ```
 
 ## Core (no React)
 
 ```ts
-import { validateGSTIN, buildUPILink, formatINR, formatINRCompact, amountInWords } from "bharatkit";
+import { validateGSTIN, buildUPILink, formatINR, formatINRCompact, amountInWords } from "indiakit-js";
 
 validateGSTIN("27AAPFU0939F1ZV");
 // { valid: true, value: "27AAPFU0939F1ZV",
@@ -66,7 +66,7 @@ type ValidationErrorCode =
 ## React
 
 ```tsx
-import { useGSTIN, useIFSC, useUPILink, useINR } from "bharatkit/react";
+import { useGSTIN, useIFSC, useUPILink, useINR } from "indiakit-js/react";
 
 function BillingForm() {
   const gstin = useGSTIN();             // errors show on blur by default
@@ -106,7 +106,7 @@ Field options: `defaultValue`, controlled `value` + `onChange`, and `validateOn:
 If you'd rather not wire a hook yourself:
 
 ```tsx
-import { GSTINInput, PhoneInput } from "bharatkit/react";
+import { GSTINInput, PhoneInput } from "indiakit-js/react";
 
 <GSTINInput
   className="border rounded px-3 py-2 data-[invalid]:border-red-500 data-[valid]:border-green-600"
