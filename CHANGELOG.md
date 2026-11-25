@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. This project follows [Semantic Versioning](https://semver.org/). While it is below 1.0, minor versions may contain breaking changes; those are called out below.
 
+## Unreleased
+
+### Added
+- Financial year helpers: `getFinancialYear` and `getFinancialQuarter` (April to March, read in IST), and `toISTDateString`.
+- Bank working-day helpers that know the RBI weekend rule (Sundays, 2nd and 4th Saturdays) and the national holidays, and accept your own holiday list: `getBankHoliday`, `isBankWorkingDay`, `addBankWorkingDays`, `nextBankWorkingDay`, `countBankWorkingDays`.
+- GST due dates for monthly, QRMP and composition filers: `getGSTDueDates`, `getGSTAnnualDueDates`, `getUpcomingGSTDeadlines` and `GSTR3B_QRMP_22ND_STATE_CODES`.
+
 ## 0.2.1 — 2026-11-25
 
 - Live demo at https://stanprajwal.github.io/indiakit-js/, linked from the README and set as the package homepage. No code changes.

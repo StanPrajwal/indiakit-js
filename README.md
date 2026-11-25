@@ -49,6 +49,36 @@ buildUPILink({ payeeAddress: "shop@okhdfcbank", payeeName: "My Shop", amount: 49
 // "upi://pay?pa=shop@okhdfcbank&pn=My%20Shop&tn=Order%201042&am=499.00&cu=INR"
 ```
 
+### Financial year, bank days and GST deadlines
+
+```ts
+import { getFinancialYear, getFinancialQuarter, addBankWorkingDays, getUpcomingGSTDeadlines } from "indiakit-js";
+
+getFinancialYear("2026-03-31");        // { label: "FY 2025-26", start: "2025-04-01", end: "2026-03-31", … }
+getFinancialQuarter(new Date());       // { quarter: 3, label: "Q3 FY 2026-27", months: "Oct–Dec 2026", … }
+
+addBankWorkingDays("2026-11-13", 1);   // "2026-11-16": skips the 2nd Saturday and Sunday
+addBankWorkingDays("2026-11-07", 1, { holidays: [{ date: "2026-11-09", name: "State holiday" }] });
+// "2026-11-10": skips Sunday the 8th and your holiday on the 9th
+
+getUpcomingGSTDeadlines({ from: "2026-11-25", withinDays: 40 });
+// [{ form: "GSTR-1",  dueDate: "2026-12-11", periodLabel: "Nov 2026", … },
+//  { form: "GSTR-3B", dueDate: "2026-12-20", periodLabel: "Nov 2026", … },
+//  { form: "GSTR-9",  dueDate: "2026-12-31", periodLabel: "FY 2025-26", … }, …]
+
+getGSTDueDates("2026-12", { scheme: "qrmp", state: "27" });
+// GSTR-1 on 13 Jan, GSTR-3B on 22 Jan (24 Jan for states in the second group)
+```
+
+- **Dates are read in IST.** A `Date` at `2026-03-31T20:00Z` is 1 April in India, so it belongs to the next financial year. Results come back as `"YYYY-MM-DD"` strings, so there are no time-zone surprises downstream.
+- **Bank days:** Sundays, the 2nd and 4th Saturdays, and 26 January, 15 August and 2 October are built in. State and festival holidays vary by state and year, so pass them in `holidays` (for example from the RBI holiday list for your state). The functions are `getBankHoliday`, `isBankWorkingDay`, `addBankWorkingDays` (negative values go backwards), `nextBankWorkingDay` and `countBankWorkingDays`.
+- **GST schemes:**
+  - `monthly`: GSTR-1 on the 11th, GSTR-3B on the 20th.
+  - `qrmp`: IFF on the 13th and PMT-06 on the 25th in the first two months of a quarter. After the quarter, GSTR-1 on the 13th and GSTR-3B on the 22nd or 24th, depending on the state.
+  - `composition`: CMP-08 on the 18th after each quarter.
+  - `getGSTAnnualDueDates` gives GSTR-9 and GSTR-9C (31 December), or GSTR-4 under composition (30 April).
+- **These are statutory due dates.** The government often extends them by notification, so check before relying on them for penalties. Income-tax dates (TDS, advance tax, ITR) aren't included yet, because they are moving to the Income-tax Act, 2025.
+
 ### `ValidationResult`
 
 ```ts
@@ -70,6 +100,7 @@ type ValidationErrorCode =
 | **GSTIN** | `validateGSTIN(value, { types? })` (returns `details.type`: `regular`, `tcs`, `tds`, `uin` or `oidar`), `isValidGSTIN`, `computeGSTINChecksum(first14)`, `isIntraStateSupply(a, b)` (decides CGST+SGST vs IGST), `GSTIN_TYPE_LABELS` |
 | **PAN** | `validatePAN` (checks the holder-type character), `isValidPAN`, `maskPAN` → `XXXXXX234F`, `PAN_HOLDER_TYPES` |
 | **IFSC** | `validateIFSC`, `isValidIFSC`, `lookupIFSC(code, { signal?, baseUrl?, fetch? })` → bank, branch, address, city, state, MICR, UPI/NEFT/RTGS/IMPS flags |
+| **Dates** | `getFinancialYear`, `getFinancialQuarter`, `toISTDateString`, `getBankHoliday`, `isBankWorkingDay`, `addBankWorkingDays`, `nextBankWorkingDay`, `countBankWorkingDays`, `getGSTDueDates(period, { scheme?, state? })`, `getGSTAnnualDueDates(fy)`, `getUpcomingGSTDeadlines({ from?, withinDays?, scheme?, state? })`, `GSTR3B_QRMP_22ND_STATE_CODES` |
 | **UPI** | `validateUPIId`, `isValidUPIId`, `buildUPILink(params, { scheme? })`, `parseUPILink(link)` |
 | **PIN code** | `validatePincode` (returns postal zone and regions), `isValidPincode`, `lookupPincode(pin, { signal?, baseUrl?, fetch? })` → district, state, circle and post offices, `PINCODE_ZONES` |
 | **Mobile** | `validateIndianMobile` (accepts `+91`, `91`, `0` prefixes and spaces, hyphens, brackets), `isValidIndianMobile`, `formatIndianMobile` → `+91 98765 43210` |
