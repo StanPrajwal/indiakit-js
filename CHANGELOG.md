@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here. This project follows [Semantic Versioning](https://semver.org/). While it is below 1.0, minor versions may contain breaking changes; those are called out below.
 
-## Unreleased
+## 0.3.0 — 2026-11-25
 
 ### Added
 - `redactPII(text, { types?, mask? })` masks Aadhaar, PAN, GSTIN, mobile numbers, UPI IDs, emails, card numbers and bank account numbers in free text. It confirms each candidate with checksums (Verhoeff, the GSTIN check digit, Luhn) and the PAN holder type to keep false positives low. `mask` can be `"partial"` (default), `"label"` or a function.

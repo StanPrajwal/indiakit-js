@@ -8,7 +8,7 @@
 
 **[Try the live demo →](https://stanprajwal.github.io/indiakit-js/)**
 
-Validators, formatters and **headless React hooks** for Indian apps: GSTIN (including UIN, OIDAR, TDS and TCS registrations), PAN, IFSC (with live branch lookup), UPI links, PIN codes (with live district and post office lookup), mobile numbers, ₹ lakh/crore formatting, Aadhaar, and **PII redaction for logs**.
+Validators, formatters and **headless React hooks** for Indian apps: GSTIN (including UIN, OIDAR, TDS and TCS registrations), PAN, IFSC (with live branch lookup), UPI links, PIN codes (with live district and post office lookup), mobile numbers, Aadhaar, TAN, CIN, Udyam and other IDs, and ₹ lakh/crore formatting. It also includes a **GST tax engine**, **financial-year, bank-day and GST due-date helpers**, and **PII redaction for logs**.
 
 - **Zero runtime dependencies.** The core works anywhere: browser, Node, edge, React Native.
 - **Headless.** The React hooks return state and `inputProps`, and the inputs come unstyled. Style them with your own CSS, Tailwind or shadcn.
